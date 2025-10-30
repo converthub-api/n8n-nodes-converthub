@@ -1,0 +1,24 @@
+# Source files
+nodes/
+credentials/
+*.ts
+!*.d.ts
+tsconfig.json
+tsconfig.tsbuildinfo
+
+# Development
+node_modules/
+.vscode/
+.github/
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Config
+.prettierrc.js
+eslint.config.mjs
+
+# Keep only dist in package
+!dist/
