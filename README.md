@@ -1,5 +1,9 @@
 # n8n-nodes-converthub
 
+![logo](./nodes/Converthub/logo.png)
+
+[![npm version](https://badge.fury.io/js/n8n-nodes-converthub.svg)](https://badge.fury.io/js/n8n-nodes-converthub)
+
 This is an n8n community node that lets you use [ConvertHub](https://converthub.com) in your n8n workflows.
 
 ConvertHub is a powerful file conversion API that supports 800+ format conversion pairs across images, documents, audio, video, and more.

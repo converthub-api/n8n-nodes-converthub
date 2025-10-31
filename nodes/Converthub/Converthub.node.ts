@@ -205,20 +205,6 @@ export class Converthub implements INodeType {
 						const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
 						const dataBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
 
-						// Prepare multipart form data
-						// eslint-disable-next-line @typescript-eslint/no-require-imports, @n8n/community-nodes/no-restricted-imports
-						const FormData = require('form-data');
-						const formDataPayload = new FormData();
-
-						// Add the file
-						formDataPayload.append('file', dataBuffer, {
-							filename: binaryData.fileName || 'file',
-							contentType: binaryData.mimeType || 'application/octet-stream',
-						});
-
-						// Add target format
-						formDataPayload.append('target_format', targetFormat);
-
 						// Generate output filename from source filename if not provided
 						let outputFilename = additionalFields.output_filename as string | undefined;
 						if (!outputFilename && binaryData.fileName) {
@@ -227,26 +213,33 @@ export class Converthub implements INodeType {
 							outputFilename = `${baseName}.${targetFormat}`;
 						}
 
+						// Convert file to base64 for upload (workaround for n8n Cloud compatibility)
+						const base64File = dataBuffer.toString('base64');
+
+						// Prepare request body
+						const body: IDataObject = {
+							file_base64: base64File,
+							filename: binaryData.fileName || 'file',
+							target_format: targetFormat,
+						};
+
 						// Add additional fields
 						if (outputFilename) {
-							formDataPayload.append('output_filename', outputFilename);
+							body.output_filename = outputFilename;
 						}
 						if (additionalFields.webhook_url) {
-							formDataPayload.append('webhook_url', additionalFields.webhook_url);
+							body.webhook_url = additionalFields.webhook_url;
 						}
 
-						// Add options as form fields
-						if (additionalFields.quality) {
-							formDataPayload.append('options[quality]', additionalFields.quality);
-						}
-						if (additionalFields.resolution) {
-							formDataPayload.append('options[resolution]', additionalFields.resolution);
-						}
-						if (additionalFields.bitrate) {
-							formDataPayload.append('options[bitrate]', additionalFields.bitrate);
-						}
-						if (additionalFields.sample_rate) {
-							formDataPayload.append('options[sample_rate]', additionalFields.sample_rate);
+						// Add conversion options
+						const conversionOptions: IDataObject = {};
+						if (additionalFields.quality) conversionOptions.quality = additionalFields.quality;
+						if (additionalFields.resolution) conversionOptions.resolution = additionalFields.resolution;
+						if (additionalFields.bitrate) conversionOptions.bitrate = additionalFields.bitrate;
+						if (additionalFields.sample_rate) conversionOptions.sample_rate = additionalFields.sample_rate;
+
+						if (Object.keys(conversionOptions).length > 0) {
+							body.options = conversionOptions;
 						}
 
 						// Add metadata
@@ -254,13 +247,15 @@ export class Converthub implements INodeType {
 							const metadataValues = (additionalFields.metadata as IDataObject)
 								.metadataValues as IDataObject[];
 							if (metadataValues) {
+								const metadata: IDataObject = {};
 								for (const item of metadataValues) {
-									formDataPayload.append(`metadata[${item.key}]`, item.value);
+									metadata[item.key as string] = item.value;
 								}
+								body.metadata = metadata;
 							}
 						}
 
-						// Make the API request using multipart/form-data
+						// Make the API request
 						let response;
 						try {
 							response = await this.helpers.httpRequestWithAuthentication.call(
@@ -268,18 +263,14 @@ export class Converthub implements INodeType {
 								'converthubApi',
 								{
 									method: 'POST',
-									url: 'https://api.converthub.com/v2/convert',
-									body: formDataPayload,
-									headers: {
-										...formDataPayload.getHeaders(),
-									},
-									skipSslCertificateValidation: false,
-									ignoreHttpStatusErrors: true,
+									url: 'https://api.converthub.com/v2/convert/base64',
+									body,
+									json: true,
 								},
 							);
 						} catch (error) {
 							// Network or other error
-							throw new NodeOperationError(this.getNode(), `Failed to connect to API: ${error.message}`);
+							throw new NodeOperationError(this.getNode(), `Failed to connect to API: ${error.message}`, { itemIndex: i });
 						}
 
 						// Check if the request was successful
