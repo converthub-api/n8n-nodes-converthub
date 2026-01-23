@@ -29,13 +29,6 @@ export class Converthub implements INodeType {
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		credentials: [{ name: 'converthubApi', required: true }],
-		requestDefaults: {
-			baseURL: 'https://api.converthub.com/v2',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
 		properties: [
 			{
 				displayName: 'Resource',
@@ -289,7 +282,7 @@ export class Converthub implements INodeType {
 						// Poll for job completion and download the file
 						const jobId = (response as IDataObject).job_id as string;
 						const completedResponse = await pollForCompletion(jobId, true, outputBinaryPropertyName, i, outputFilename);
-						returnData.push(completedResponse);
+						returnData.push({ ...completedResponse, pairedItem: { item: i } });
 					} else if (operation === 'convertUrl') {
 						const fileUrl = this.getNodeParameter('fileUrl', i) as string;
 						const targetFormat = this.getNodeParameter('targetFormat', i) as string;
@@ -389,7 +382,7 @@ export class Converthub implements INodeType {
 						// Poll for job completion and download the file
 						const jobId = (response as IDataObject).job_id as string;
 						const completedResponse = await pollForCompletion(jobId, true, outputBinaryPropertyName, i, outputFilename);
-						returnData.push(completedResponse);
+						returnData.push({ ...completedResponse, pairedItem: { item: i } });
 					} else if (operation === 'getStatus') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
@@ -403,7 +396,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'getDownloadUrl') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
@@ -417,7 +410,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'cancelJob') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
@@ -431,7 +424,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'deleteConversion') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
@@ -445,7 +438,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					}
 				} else if (resource === 'formats') {
 					if (operation === 'getAllFormats') {
@@ -459,7 +452,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'getFormatConversions') {
 						const format = this.getNodeParameter('format', i) as string;
 
@@ -473,7 +466,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'checkConversionSupport') {
 						const sourceFormat = this.getNodeParameter('sourceFormat', i) as string;
 						const targetFormat = this.getNodeParameter('targetFormat', i) as string;
@@ -488,7 +481,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'getAllConversions') {
 						const response = await this.helpers.httpRequestWithAuthentication.call(
 							this,
@@ -500,7 +493,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					}
 				} else if (resource === 'account') {
 					if (operation === 'getDetails') {
@@ -514,7 +507,7 @@ export class Converthub implements INodeType {
 							},
 						);
 
-						returnData.push({ json: response as IDataObject });
+						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					}
 				}
 			} catch (error) {
