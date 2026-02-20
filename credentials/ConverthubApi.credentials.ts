@@ -32,7 +32,10 @@ export class ConverthubApi implements ICredentialType {
 		credentials: ICredentialDataDecryptedObject,
 		requestOptions: IHttpRequestOptions,
 	): Promise<IHttpRequestOptions> {
-		const apiKey = String(credentials.apiKey || '').trim();
+		// The pipe separator in API keys (e.g. "252|abc...") can get corrupted to a
+		// non-printable character during n8n credential processing, causing header
+		// validation errors. Replace any non-printable character with a pipe to restore it.
+		const apiKey = String(credentials.apiKey || '').trim().replace(/[^\x20-\x7E]/g, '|');
 		requestOptions.headers = {
 			...requestOptions.headers,
 			Authorization: `Bearer ${apiKey}`,

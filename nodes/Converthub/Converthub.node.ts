@@ -76,7 +76,7 @@ export class Converthub implements INodeType {
 				this: ICredentialTestFunctions,
 				credential: ICredentialsDecrypted,
 			): Promise<INodeCredentialTestResult> {
-				const apiKey = String(credential.data?.apiKey || '').trim();
+				const apiKey = String(credential.data?.apiKey || '').trim().replace(/[^\x20-\x7E]/g, '|');
 				try {
 					// eslint-disable-next-line @n8n/community-nodes/no-deprecated-workflow-functions
 					await this.helpers.request({
