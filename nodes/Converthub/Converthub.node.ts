@@ -76,7 +76,15 @@ export class Converthub implements INodeType {
 				this: ICredentialTestFunctions,
 				credential: ICredentialsDecrypted,
 			): Promise<INodeCredentialTestResult> {
-				const apiKey = String(credential.data?.apiKey || '').replace(/[^\x20-\x7E]/g, '');
+				const rawKey = credential.data?.apiKey;
+				const apiKey = String(rawKey || '').replace(/[^\x20-\x7E]/g, '');
+				console.log('[ConvertHub] Credential test debug:', {
+					rawKeyType: typeof rawKey,
+					rawKeyLength: typeof rawKey === 'string' ? rawKey.length : 'N/A',
+					apiKeyLength: apiKey.length,
+					apiKeyPreview: apiKey.length > 6 ? `${apiKey.slice(0, 3)}...${apiKey.slice(-3)}` : '(too short)',
+					headerValue: `Bearer ${apiKey}`.slice(0, 10) + '...',
+				});
 				try {
 					// eslint-disable-next-line @n8n/community-nodes/no-deprecated-workflow-functions
 					await this.helpers.request({
@@ -93,6 +101,7 @@ export class Converthub implements INodeType {
 						message: 'Connection successful!',
 					};
 				} catch (error) {
+					console.log('[ConvertHub] Credential test error:', error.message);
 					return {
 						status: 'Error',
 						message: `Connection failed: ${error.message}`,
