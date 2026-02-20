@@ -1,7 +1,8 @@
 import type {
-	IAuthenticateGeneric,
+	ICredentialDataDecryptedObject,
 	ICredentialTestRequest,
 	ICredentialType,
+	IHttpRequestOptions,
 	INodeProperties,
 	Icon,
 } from 'n8n-workflow';
@@ -28,14 +29,17 @@ export class ConverthubApi implements ICredentialType {
 		},
 	];
 
-	authenticate: IAuthenticateGeneric = {
-		type: 'generic',
-		properties: {
-			headers: {
-				Authorization: '=Bearer {{$credentials.apiKey}}',
-			},
-		},
-	};
+	async authenticate(
+		credentials: ICredentialDataDecryptedObject,
+		requestOptions: IHttpRequestOptions,
+	): Promise<IHttpRequestOptions> {
+		const apiKey = (credentials.apiKey as string).trim();
+		requestOptions.headers = {
+			...requestOptions.headers,
+			Authorization: `Bearer ${apiKey}`,
+		};
+		return requestOptions;
+	}
 
 	test: ICredentialTestRequest = {
 		request: {
