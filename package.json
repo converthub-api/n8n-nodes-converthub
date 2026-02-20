@@ -27,7 +27,7 @@
     "url": "https://github.com/converthub-api/n8n-nodes-converthub/issues"
   },
   "scripts": {
-    "build": "n8n-node build",
+    "build": "npx @n8n/node-cli build",
     "build:watch": "tsc --watch",
     "dev": "n8n-node dev",
     "lint": "n8n-node lint",
@@ -48,14 +48,13 @@
       "dist/nodes/Converthub/Converthub.node.js"
     ]
   },
-  "dependencies": {},
   "devDependencies": {
     "@n8n/node-cli": "*",
     "@types/node": "^20.0.0",
     "eslint": "9.32.0",
     "prettier": "3.6.2",
     "release-it": "^19.0.4",
-    "typescript": "5.9.2"
+    "typescript": "^5.9.2"
   },
   "peerDependencies": {
     "n8n-workflow": "*"
