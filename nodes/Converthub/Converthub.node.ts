@@ -2,7 +2,10 @@ import {
 	NodeConnectionTypes,
 	NodeOperationError,
 	sleep,
+	type ICredentialTestFunctions,
+	type ICredentialsDecrypted,
 	type IExecuteFunctions,
+	type INodeCredentialTestResult,
 	type INodeExecutionData,
 	type INodeType,
 	type INodeTypeDescription,
@@ -28,7 +31,14 @@ export class Converthub implements INodeType {
 		usableAsTool: true,
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
-		credentials: [{ name: 'converthubApi', required: true }],
+		credentials: [{ name: 'converthubApi', required: true, testedBy: 'converthubApiTest' }],
+		requestDefaults: {
+			baseURL: 'https://api.converthub.com/v2',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+			},
+		},
 		properties: [
 			{
 				displayName: 'Resource',
@@ -58,6 +68,37 @@ export class Converthub implements INodeType {
 			...formatsDescription,
 			...accountDescription,
 		],
+	};
+
+	methods = {
+		credentialTest: {
+			async converthubApiTest(
+				this: ICredentialTestFunctions,
+				credential: ICredentialsDecrypted,
+			): Promise<INodeCredentialTestResult> {
+				const apiKey = String(credential.data?.apiKey || '').replace(/[^\x20-\x7E]/g, '');
+				try {
+					await this.helpers.request({
+						method: 'GET',
+						url: 'https://api.converthub.com/v2/account',
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+							Accept: 'application/json',
+						},
+						json: true,
+					});
+					return {
+						status: 'OK',
+						message: 'Connection successful!',
+					};
+				} catch (error) {
+					return {
+						status: 'Error',
+						message: `Connection failed: ${error.message}`,
+					};
+				}
+			},
+		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {

@@ -1,6 +1,5 @@
 import type {
 	ICredentialDataDecryptedObject,
-	ICredentialTestRequest,
 	ICredentialType,
 	IHttpRequestOptions,
 	INodeProperties,
@@ -33,18 +32,12 @@ export class ConverthubApi implements ICredentialType {
 		credentials: ICredentialDataDecryptedObject,
 		requestOptions: IHttpRequestOptions,
 	): Promise<IHttpRequestOptions> {
-		const apiKey = (credentials.apiKey as string).trim();
+		// Strip any non-printable/control characters that may cause header validation errors
+		const apiKey = String(credentials.apiKey || '').replace(/[^\x20-\x7E]/g, '');
 		requestOptions.headers = {
 			...requestOptions.headers,
 			Authorization: `Bearer ${apiKey}`,
 		};
 		return requestOptions;
 	}
-
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL: 'https://api.converthub.com',
-			url: '/v2/account',
-		},
-	};
 }
