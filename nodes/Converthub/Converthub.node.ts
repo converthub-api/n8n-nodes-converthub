@@ -78,6 +78,7 @@ export class Converthub implements INodeType {
 			): Promise<INodeCredentialTestResult> {
 				const apiKey = String(credential.data?.apiKey || '').replace(/[^\x20-\x7E]/g, '');
 				try {
+					// eslint-disable-next-line @n8n/community-nodes/no-deprecated-workflow-functions
 					await this.helpers.request({
 						method: 'GET',
 						url: 'https://api.converthub.com/v2/account',
