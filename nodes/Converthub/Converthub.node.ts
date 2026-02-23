@@ -10,6 +10,7 @@ import {
 	type INodeType,
 	type INodeTypeDescription,
 	type IDataObject,
+	type IHttpRequestOptions,
 } from 'n8n-workflow';
 
 import { conversionDescription } from './resources/conversion';
@@ -115,6 +116,22 @@ export class Converthub implements INodeType {
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const operation = this.getNodeParameter('operation', 0) as string;
 
+		// Get credentials and clean the API key upfront to avoid pipe character
+		// corruption in n8n v2. We use httpRequest directly rather than
+		// httpRequestWithAuthentication for reliable header handling.
+		const credentials = await this.getCredentials('converthubApi');
+		const apiKey = String(credentials.apiKey || '').trim().replace(/[^\x20-\x7E]/g, '|');
+		const authenticatedRequest = async (options: IHttpRequestOptions) => {
+			return this.helpers.httpRequest({
+				...options,
+				headers: {
+					Authorization: `Bearer ${apiKey}`,
+					Accept: 'application/json',
+					...options.headers,
+				},
+			});
+		};
+
 		// Helper function to poll for job completion
 		const pollForCompletion = async (
 			jobId: string,
@@ -128,15 +145,11 @@ export class Converthub implements INodeType {
 
 			while (attempts < maxAttempts) {
 				try {
-					const statusResponse = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'converthubApi',
-						{
+					const statusResponse = await authenticatedRequest({
 							method: 'GET',
 							url: `https://api.converthub.com/v2/jobs/${jobId}`,
 							json: true,
-						},
-					);
+					});
 
 					const success = (statusResponse as IDataObject).success as boolean;
 					const status = (statusResponse as IDataObject).status as string;
@@ -144,15 +157,11 @@ export class Converthub implements INodeType {
 					// Check if the conversion is completed
 					if (status === 'completed' && success === true) {
 						// Get the download URL
-						const downloadResponse = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const downloadResponse = await authenticatedRequest({
 								method: 'GET',
 								url: `https://api.converthub.com/v2/jobs/${jobId}/download`,
 								json: true,
-							},
-						);
+						});
 
 						const downloadUrl = (downloadResponse as IDataObject).download_url as string;
 						const result: INodeExecutionData = {
@@ -300,16 +309,12 @@ export class Converthub implements INodeType {
 						// Make the API request
 						let response;
 						try {
-							response = await this.helpers.httpRequestWithAuthentication.call(
-								this,
-								'converthubApi',
-								{
+							response = await authenticatedRequest({
 									method: 'POST',
 									url: 'https://api.converthub.com/v2/convert/base64',
 									body,
 									json: true,
-								},
-							);
+							});
 						} catch (error) {
 							// Network or other error
 							throw new NodeOperationError(this.getNode(), `Failed to connect to API: ${error.message}`, { itemIndex: i });
@@ -399,17 +404,13 @@ export class Converthub implements INodeType {
 
 						let response;
 						try {
-							response = await this.helpers.httpRequestWithAuthentication.call(
-								this,
-								'converthubApi',
-								{
+							response = await authenticatedRequest({
 									method: 'POST',
 									url: 'https://api.converthub.com/v2/convert-url',
 									body,
 									json: true,
 									ignoreHttpStatusErrors: true,
-								},
-							);
+							});
 						} catch (error) {
 							// Network or other error
 							throw new NodeOperationError(this.getNode(), `Failed to connect to API: ${error.message}`);
@@ -435,126 +436,90 @@ export class Converthub implements INodeType {
 					} else if (operation === 'getStatus') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'GET',
 								url: `https://api.converthub.com/v2/jobs/${jobId}`,
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'getDownloadUrl') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'GET',
 								url: `https://api.converthub.com/v2/jobs/${jobId}/download`,
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'cancelJob') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'DELETE',
 								url: `https://api.converthub.com/v2/jobs/${jobId}`,
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'deleteConversion') {
 						const jobId = this.getNodeParameter('jobId', i) as string;
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'DELETE',
 								url: `https://api.converthub.com/v2/jobs/${jobId}/destroy`,
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					}
 				} else if (resource === 'formats') {
 					if (operation === 'getAllFormats') {
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'GET',
 								url: 'https://api.converthub.com/v2/formats',
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'getFormatConversions') {
 						const format = this.getNodeParameter('format', i) as string;
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'GET',
 								url: `https://api.converthub.com/v2/formats/${format}/conversions`,
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'checkConversionSupport') {
 						const sourceFormat = this.getNodeParameter('sourceFormat', i) as string;
 						const targetFormat = this.getNodeParameter('targetFormat', i) as string;
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'GET',
 								url: `https://api.converthub.com/v2/formats/${sourceFormat}/to/${targetFormat}`,
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					} else if (operation === 'getAllConversions') {
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'GET',
 								url: 'https://api.converthub.com/v2/formats/supported-conversions',
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					}
 				} else if (resource === 'account') {
 					if (operation === 'getDetails') {
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'converthubApi',
-							{
+						const response = await authenticatedRequest({
 								method: 'GET',
 								url: 'https://api.converthub.com/v2/account',
 								json: true,
-							},
-						);
+						});
 
 						returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
 					}
