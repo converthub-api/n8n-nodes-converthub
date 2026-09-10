@@ -288,6 +288,7 @@ export class Converthub implements INodeType {
 						if (additionalFields.resolution) conversionOptions.resolution = additionalFields.resolution;
 						if (additionalFields.bitrate) conversionOptions.bitrate = additionalFields.bitrate;
 						if (additionalFields.sample_rate) conversionOptions.sample_rate = additionalFields.sample_rate;
+						if (additionalFields.single_page) conversionOptions.single_page = true;
 
 						if (Object.keys(conversionOptions).length > 0) {
 							body.options = conversionOptions;
@@ -382,6 +383,7 @@ export class Converthub implements INodeType {
 						if (additionalFields.bitrate) conversionOptions.bitrate = additionalFields.bitrate;
 						if (additionalFields.sample_rate)
 							conversionOptions.sample_rate = additionalFields.sample_rate;
+						if (additionalFields.single_page) conversionOptions.single_page = true;
 
 						if (Object.keys(conversionOptions).length > 0) {
 							body.options = conversionOptions;

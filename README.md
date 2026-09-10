@@ -117,6 +117,7 @@ The **Convert File** and **Convert from URL** operations support these optional 
 - **Resolution** - Resolution for image/video conversions (e.g., "1920x1080")
 - **Bitrate** - Bitrate for audio/video conversions (e.g., "320k")
 - **Sample Rate** - Sample rate for audio conversions (e.g., 44100)
+- **Single Page (Spreadsheets)** - Render each sheet of an XLSX/XLS/ODS/CSV file on one page sized to its content when converting to PDF, PNG or JPG (ignored for other source formats)
 - **Metadata** - Custom key-value pairs for tracking purposes
 
 ## API Limits

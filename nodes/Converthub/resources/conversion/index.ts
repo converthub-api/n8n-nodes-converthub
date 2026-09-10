@@ -190,6 +190,14 @@ export const conversionFields: INodeProperties[] = [
 				description: 'Sample rate for audio conversions',
 			},
 			{
+				displayName: 'Single Page (Spreadsheets)',
+				name: 'single_page',
+				type: 'boolean',
+				default: false,
+				description:
+					'Whether to render each sheet of a spreadsheet (XLSX, XLS, ODS, CSV) on one page sized to its content when converting to PDF, PNG or JPG. Ignored for other source formats.',
+			},
+			{
 				displayName: 'Webhook URL',
 				name: 'webhook_url',
 				type: 'string',
@@ -333,6 +341,14 @@ export const conversionFields: INodeProperties[] = [
 				type: 'number',
 				default: 44100,
 				description: 'Sample rate for audio conversions',
+			},
+			{
+				displayName: 'Single Page (Spreadsheets)',
+				name: 'single_page',
+				type: 'boolean',
+				default: false,
+				description:
+					'Whether to render each sheet of a spreadsheet (XLSX, XLS, ODS, CSV) on one page sized to its content when converting to PDF, PNG or JPG. Ignored for other source formats.',
 			},
 			{
 				displayName: 'Webhook URL',
